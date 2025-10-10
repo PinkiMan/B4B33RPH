@@ -26,3 +26,4 @@ if __name__ == '__main__':
     assert MyVector([1, 2, 3]) * MyVector([3, 4, 5]) == 26
     assert MyVector([2, 4, 6]) * MyVector([3, 5, 7]) == 68
     # alternative with unittest module
+
