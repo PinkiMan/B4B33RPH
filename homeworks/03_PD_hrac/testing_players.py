@@ -24,7 +24,7 @@ class RandomPlayer:
         self.history = []
 
     @staticmethod
-    def move():
+    def select_move():
         return random.choice([True,False])
 
     def record_last_moves(self,my_turn, enemy_turn):
@@ -37,7 +37,7 @@ class FalsePlayer:
         self.history=[]
 
     @staticmethod
-    def move():
+    def select_move():
         return False
 
     def record_last_moves(self,my_turn, enemy_turn):
@@ -50,7 +50,7 @@ class TruePlayer:
         self.history=[]
 
     @staticmethod
-    def move():
+    def select_move():
         return True
 
     def record_last_moves(self,my_turn, enemy_turn):
@@ -63,7 +63,7 @@ class SwapTrue:
         self.history = []
         self.last = True
 
-    def move(self):
+    def select_move(self):
         self.last = not self.last
         return self.last
 
@@ -77,7 +77,7 @@ class SwapFalse:
         self.history = []
         self.last = False
 
-    def move(self):
+    def select_move(self):
         self.last = not self.last
         return self.last
 
@@ -90,7 +90,7 @@ class RepeaterPlayer:
         self.matrix = matrix
         self.history = []
 
-    def move(self):
+    def select_move(self):
         if len(self.history) == 0:
             return random.choice([True,False])
         else:
@@ -105,7 +105,7 @@ class Pavlov:
         self.history = []
         self.last = False
 
-    def move(self):
+    def select_move(self):
         return self.last
 
     def record_last_moves(self,my_turn, enemy_turn):
@@ -124,7 +124,7 @@ class BetterBetterPlayer:
     def reset(self):
         self.round = 0
 
-    def move(self):
+    def select_move(self):
         self.round += 1
         prob = (1001 - self.round) if (1001-self.round) >= 0 else 0
         return random.choices([True,False],[1000, prob])[0]
@@ -141,7 +141,7 @@ class WorseWorsePlayer:
     def reset(self):
         self.round = 0
 
-    def move(self):
+    def select_move(self):
         self.round += 1
         return random.choices([True,False],[1,self.round/1000])[0]
 
@@ -157,7 +157,7 @@ class Gradual:
         self.defect_queue = 0
         self.last_defect = 0
 
-    def move(self):
+    def select_move(self):
         if self.rounds == 0:
             return False
         else:
@@ -188,7 +188,7 @@ class PinkiPlayer:
         self.matrix=matrix
         self.history = []
 
-    def move(self):
+    def select_move(self):
         if self.matrix[0][0][0]+self.matrix[0][1][0]<self.matrix[1][0][0]+self.matrix[1][1][0]:
             return False
         else:
@@ -203,7 +203,7 @@ class AntiPinkiPlayer:
         self.matrix=matrix
         self.history = []
 
-    def move(self):
+    def select_move(self):
         if self.matrix[0][0][0]+self.matrix[0][1][0]>self.matrix[1][0][0]+self.matrix[1][1][0]:
             return False
         else:
@@ -243,7 +243,7 @@ class BestPlayerPinki:
         return None
 
 
-    def move(self):
+    def select_move(self):
         if self.Round>10:
             Enemy_Output=self.Enemy_expected_turn()
             if Enemy_Output!=None:
@@ -321,7 +321,7 @@ class Patrik:
             if self.iterations < 3:
                 self.strat = 3
 
-    def move(self):
+    def select_move(self):
         '''0: Passive, 1&2: copycat, 3: Aggressive'''
         if self.strat == 0:
             return False
@@ -361,7 +361,7 @@ class Old:
         self.opponent_false = []
         self.opponent_true = []
 
-    def move(self):
+    def select_move(self):
         # example:
         #   ( ((4,4),(1,6)) , ((6,1),(2,2)) )
         #   ( ((C,C),(C,D)) , ((D,C),(D,D)) )
@@ -409,7 +409,7 @@ class Luky:
         self.opponent_false = 1
         self.opponent_true = 1
 
-    def move(self):
+    def select_move(self):
         '''Podminka - reakce na souperovi minule tahy.'''
         if (len(self.opponent_move) > 0):
             if self.opponent_move[-1] == [False]:
@@ -433,7 +433,7 @@ class Elka1 :
         # Zaciname s predpokladom, ze super v prvom tahu spolupracuje (False).
         # Ak nemame informaciu o predoslom tahu (prvy tah), zacneme so spolupracou.
 
-    def move(self) :
+    def select_move(self) :
         # Kopirujeme predchadzajuci tah supera.
         # Ak super posledny tah podvadzal (True), podvadzame aj my.
         # Ak super posledny tah spolupracoval (False), spolupracujeme aj my.
@@ -482,7 +482,7 @@ class Elka2 :
         if D_D [0] > C_D [0] and D_D [0] > C_C [0] and D_D [0] > D_C [0] :
             self.always_betray = True
 
-    def move(self) :
+    def select_move(self) :
         '''Player decides whether to cooperate (False) or betray (True)'''
 
         # If self-play is detected, always cooperate to maximize the total gain
@@ -565,7 +565,7 @@ class GPTPlayer:
         self.S = payoff_matrix[0][1][0]  # sucker's payoff (C,D)
         self.P = payoff_matrix[1][1][0]  # punishment (D,D)
 
-    def move(self) -> bool:
+    def select_move(self) -> bool:
         """Vrátí False=COOPERATE nebo True=DEFECT."""
         if not self.history:
             return COOPERATE  # začínáme spoluprací
@@ -589,6 +589,226 @@ class GPTPlayer:
         """Uloží poslední tahy (můj, soupeřův)."""
         self.history.append((my_last_move, opponent_last_move))
 
+# player.py
+import random
+from typing import Optional, List, Tuple
+
+COOPERATE = False
+DEFECT = True
+
+class GPT2:
+    '''Adaptivní mix: handshake, Pavlov/TFT, gradual, forgiveness, opatrný endgame'''
+    def __init__(self, payoff_matrix, number_of_iterations: Optional[int] = None):
+        """
+        payoff_matrix: 2x2 list of pairs payoff_matrix[i][j] = (payoffA, payoffB)
+                       i,j in {0(C),1(D)}.
+        number_of_iterations: optional known number of kol (N).
+        """
+        self.payoff_matrix = payoff_matrix
+        self.number_of_iterations = number_of_iterations
+
+        # Extract canonical payoffs for player A (safe fallback if format unexpected)
+        try:
+            self.R = payoff_matrix[0][0][0]  # C,C
+            self.S = payoff_matrix[0][1][0]  # C,D (sucker)
+            self.T = payoff_matrix[1][0][0]  # D,C (temptation)
+            self.P = payoff_matrix[1][1][0]  # D,D (punishment)
+        except Exception:
+            # reasonable defaults
+            self.R, self.S, self.T, self.P = 3, 0, 5, 1
+
+        # history and stats
+        self.history: List[Tuple[bool, bool]] = []
+        self.total_rounds = 0
+        self.opp_coop_count = 0
+        self.opp_defect_count = 0
+
+        # queue for planned moves (for Gradual punishment / queued calm)
+        self._queue: List[bool] = []
+
+        # last moves
+        self._last_my: Optional[bool] = None
+        self._last_opp: Optional[bool] = None
+
+        # RNG
+        self._rng = random.Random()
+
+        # parameters (tuneable)
+        self.forgiveness_rate = 0.08   # pravděpodobnost odpustit jedno defektování
+        self.handshake_len = 2         # první N tahů cooperate (handshake)
+        self.self_detect_window = 12   # okno pro detekci self-play / mirror
+        self.min_detection_rounds = 6  # minimální kola před rozhodnutím o typech
+        # store mirror hits
+        self._mirror_hits = 0
+
+        # track opponent defection events count (for Gradual)
+        self._opp_defection_events = 0
+
+    def select_move(self) -> bool:
+        """Vrátí False=COOPERATE nebo True=DEFECT."""
+        # pokud máme naplánované tahy (např. trestní sekvence), použij je
+        if self._queue:
+            return self._queue.pop(0)
+
+        # handshake: začínáme snažit se navázat kooperaci
+        if not self.history and self.handshake_len >= 1:
+            return COOPERATE
+        if len(self.history) < self.handshake_len:
+            return COOPERATE
+
+        # index aktuálního kola (1-based)
+        round_index = len(self.history) + 1
+
+        # ---- detekce typů soupeře ----
+        opp_coop_rate = self.opp_coop_count / max(1, self.total_rounds)
+        opp_def_rate = self.opp_defect_count / max(1, self.total_rounds)
+
+        is_all_coop = (self.total_rounds >= self.min_detection_rounds and opp_coop_rate > 0.98)
+        is_all_defect = (self.total_rounds >= self.min_detection_rounds and opp_def_rate > 0.98)
+
+        # mirror detection: soupeř často hraje to, co jsem hrál v předchozím tahu
+        mirror_score = self._compute_mirror_score()
+        is_mirror = (self.total_rounds >= self.min_detection_rounds and mirror_score > 0.85)
+
+        # self-play detection: pokud opponentova historie téměř přesně kopíruje moje tahy (posunutě),
+        # je velká šance, že hraji proti sobě (stejná strategie).
+        is_self_like = (self.total_rounds >= self.self_detect_window and mirror_score > 0.9)
+
+        # ---- endgame logic (opatrně) ----
+        if self.number_of_iterations is not None:
+            # pokud víme, že jsme v posledním kole, zvaž defekt pro zisk, jen pokud:
+            # - opponent dlouhodobě kooperuje AND
+            # - není detekován self-play (nechceme snížit self-play sumu)
+            if round_index == self.number_of_iterations:
+                if (opp_coop_rate > 0.9) and (not is_self_like):
+                    return DEFECT
+                # pokud je self-like nebo opponent nereálně smíšený, raději cooperate
+                return COOPERATE
+            # optionally: ve dvou posledních kolech můžeme být opatrnější; implementováno jen 1-kolo
+
+        # ---- jednoduchý Pavlov (win-stay/lose-shift) ----
+        if self._last_my is None:
+            pavlov_choice = COOPERATE
+        else:
+            last_pay = self.payoff_matrix[int(self._last_my)][int(self._last_opp)][0]
+            # považujeme za "dobré" pokud >= průměr mezi R a T (heuristika)
+            good_threshold = (self.R + self.T) / 2.0
+            if last_pay >= good_threshold:
+                pavlov_choice = self._last_my
+            else:
+                pavlov_choice = not self._last_my
+
+        # ---- behavior by detected type ----
+        # 1) always-cooperate -> malé, řízené exploitování
+        if is_all_coop:
+            # exploit s nízkou pravděpodobností; adaptivně podle (T-R)
+            extra = max(0.0, (self.T - self.R) / max(1.0, abs(self.R) + 1.0))
+            prob_defect = min(0.30, 0.10 + 0.18 * extra)  # nikdy příliš agresivní
+            if self._rng.random() < prob_defect and (not is_self_like):
+                return DEFECT
+            return COOPERATE
+
+        # 2) always-defect -> bránit se
+        if is_all_defect:
+            return DEFECT
+
+        # 3) mirror/TFT-like -> kopíruj jeho poslední tah (stabilní)
+        if is_mirror:
+            tft_move = self.history[-1][1]
+            # pokud pavlov a tft souhlasí, použij; pokud ne, preferuj tft pro stabilitu
+            base = tft_move
+            # forgiveness: občas odpustit
+            if base == DEFECT and self._rng.random() < self.forgiveness_rate:
+                return COOPERATE
+            return base
+
+        # 4) nejasný / směsný soupeř: rozhodni podle očekávaného zisku + Pavlov
+        exp_coop = opp_coop_rate * self.R + (1 - opp_coop_rate) * self.S
+        exp_def  = opp_coop_rate * self.T + (1 - opp_coop_rate) * self.P
+
+        # Pokud defection dává jasně více, použij ji; ale respektuj Pavlov
+        if exp_def > exp_coop + 1e-9:
+            # pokud pavlov_choice je také defekt, jasně defect; jinak použij většinou defect
+            if pavlov_choice == DEFECT:
+                return DEFECT
+            else:
+                if self._rng.random() < 0.85:
+                    return DEFECT
+                else:
+                    return COOPERATE
+
+        # 5) default: Pavlov + malé odpuštění a drobná náhodnost
+        choice = pavlov_choice
+        # forgiveness: pokud chceme defectovat, občas odpustíme
+        if choice == DEFECT and self._rng.random() < self.forgiveness_rate:
+            choice = COOPERATE
+        # drobná náhodnost pro rozbití cyklů
+        if self._rng.random() < 0.01:
+            choice = not choice
+        return choice
+
+    def record_last_moves(self, my_last_move: bool, opponent_last_move: bool):
+        """Ulož moje a soupeřovy poslední tahy (booleany)."""
+        self.history.append((my_last_move, opponent_last_move))
+        self.total_rounds += 1
+        if opponent_last_move == COOPERATE:
+            self.opp_coop_count += 1
+        else:
+            self.opp_defect_count += 1
+            # increment defection event count and possibly schedule Gradual punishment
+            self._opp_defection_events += 1
+            # plán Gradual trestu: po k-té defekci soupeře přidat k defektů + 2 coop
+            # ale capneme tresty, abychom nerušili příliš dlouho
+            max_n = 4
+            n = min(max_n, self._opp_defection_events)
+            punishment = [DEFECT] * n + [COOPERATE, COOPERATE]
+            # připojíme za současnou frontu
+            # (pokud hra je v pokročilém stádiu self-play, možná nechceme trestat => kontrolujeme)
+            # pokud detekujeme, že soupeř je pravděpodobně self-like, neplánujeme trest
+            if not self._likely_self_play():
+                # zkracujeme frontu, aby trestní fronta nebyla nekonečná
+                space_left = 12 - len(self._queue)
+                if space_left > 0:
+                    self._queue.extend(punishment[:space_left])
+
+        # update mirror hits metric
+        if len(self.history) >= 2:
+            # pokud opponent's current move == my previous => mirror "hit"
+            if self.history[-1][1] == self.history[-2][0]:
+                self._mirror_hits += 1
+
+        # uložit poslední tahy
+        self._last_my = my_last_move
+        self._last_opp = opponent_last_move
+
+    # ---- pomocné metody ----
+    def _compute_mirror_score(self) -> float:
+        """Vrátí poměr mirror hits v rámci posledního okna."""
+        w = min(self.self_detect_window, len(self.history))
+        if w < 2:
+            return 0.0
+        hits = 0
+        checks = 0
+        start = len(self.history) - w
+        for i in range(start + 1, len(self.history)):
+            # porovnat my_move_{i-1} a opp_move_{i}
+            my_prev = self.history[i-1][0]
+            opp_now = self.history[i][1]
+            checks += 1
+            if opp_now == my_prev:
+                hits += 1
+        return (hits / checks) if checks > 0 else 0.0
+
+    def _likely_self_play(self) -> bool:
+        """Rychlá heuristika: zda je pravděpodobné, že hrajeme proti sobě."""
+        if self.total_rounds < self.self_detect_window:
+            return False
+        mirror_score = self._compute_mirror_score()
+        # velmi vysoký mirror score => pravděpodobně self-play (nebo mirror strategy)
+        return mirror_score > 0.92
+
+
+
 class Tournament:
     def __init__(self, players, payoff_matrix, rounds=10_000):
         self.players = players
@@ -597,6 +817,7 @@ class Tournament:
         self.points = {}
         self.enemy_points = {}
         self.table_points = {}
+        self.solo_points = {}
         self.print_players = 15
 
     def game(self, player_1, player_2):
@@ -604,8 +825,8 @@ class Tournament:
         p2 = 0
 
         for _ in range(self.rounds):
-            move1 = player_1.move()
-            move2 = player_2.move()
+            move1 = player_1.select_move()
+            move2 = player_2.select_move()
 
             p1 += self.payoff_matrix[int(move1 == True)][int(move2 == True)][0]
             p2 += self.payoff_matrix[int(move1 == True)][int(move2 == True)][1]
@@ -614,6 +835,46 @@ class Tournament:
             player_2.record_last_moves(move2, move1)
 
         return p1, p2
+
+    def tournament_self(self):
+        for player_1 in self.players:
+            player1 = player_1(self.payoff_matrix)
+            player2 = player_1(self.payoff_matrix)
+            score1, score2 = self.game(player1, player2)
+
+            name_1 = player1.__class__.__name__
+
+            if name_1 in self.solo_points.keys():
+                self.solo_points[name_1] += score1
+                self.solo_points[name_1] += score2
+            else:
+                self.solo_points[name_1] = score1
+                self.solo_points[name_1] += score2
+
+
+        sorted_dict = dict(sorted(self.solo_points.items(), key=lambda x: x[1])[
+                               :(len(self.solo_points.items()) - 1) - self.print_players:-1])
+
+
+        #print("Points ballance:")
+        ballance_dict = {}
+        for key in self.solo_points.keys():
+            ballance_dict[key] = self.solo_points[key] - self.solo_points[key]
+
+        for key in sorted_dict.keys():
+            #print(f"\t{str(key).ljust(20)} - \t{self.solo_points[key]}")
+            pass
+
+        score_dict = {}
+        i = 0
+        last_points = 0
+        for index, key in enumerate(sorted_dict.keys()):
+            if last_points != self.solo_points[key]:
+                last_points = self.solo_points[key]
+                i += 1
+            score_dict[key] = i
+
+        return score_dict
 
     def tournament(self):
         for index_1, player_1 in enumerate(self.players):
@@ -648,7 +909,7 @@ class Tournament:
 
                 #print(f"\t{player1.__class__.__name__}:\t{player2.__class__.__name__} - {score1/self.rounds}/{score2/self.rounds}")
 
-        #print("Points get:")
+        """#print("Points get:")
         sorted_dict = dict(sorted(self.points.items(), key=lambda x: x[1])[:(len(self.points.items())-1)-self.print_players:-1])
         for key in sorted_dict.keys():
             #print(f"\t{key}:\t{self.points[key]}")
@@ -658,21 +919,21 @@ class Tournament:
         sorted_dict = dict(sorted(self.enemy_points.items(), key=lambda x: x[1])[:self.print_players])
         for key in sorted_dict.keys():
             #print(f"\t{key}:\t{self.enemy_points[key]}")
-            pass
+            pass"""
 
-        print("Points ballance:")
+        #print("Points ballance:")
         ballance_dict = {}
         for key in self.points.keys():
             ballance_dict[key] = self.points[key] - self.enemy_points[key]
         sorted_dict = dict(
             sorted(ballance_dict.items(), key=lambda x: x[1])[::-1])
         for key in sorted_dict.keys():
-            print(f"\t{str(key).ljust(20)} - \t{self.points[key]}:{self.enemy_points[key]}:{ballance_dict[key]}")
+            # print(f"\t{str(key).ljust(20)} - \t{self.points[key]}:{self.enemy_points[key]}:{ballance_dict[key]}")
+            pass
 
 
 
-
-        import matplotlib.pyplot as plt
+        """import matplotlib.pyplot as plt
 
         x = [i for i in range(len(sorted_dict.keys()))]
         y1 = [self.points[key] for key in sorted_dict.keys()]
@@ -689,12 +950,19 @@ class Tournament:
         ax.scatter(x, y2, color='r')
         ax.scatter(x, y3, color='y')
 
-        plt.show()
+        plt.show()"""
+
+        score_dict = {}
+        for index, key in enumerate(sorted_dict.keys()):
+            score_dict[key] = index
+
+        return score_dict
 
 
 def main():
+    from player import MyPlayer
     players = [RandomPlayer, FalsePlayer, TruePlayer, SwapTrue, SwapFalse, GPTPlayer, PinkiPlayer, AntiPinkiPlayer,
-               BestPlayerPinki, RepeaterPlayer, Pavlov, BetterBetterPlayer, WorseWorsePlayer, Patrik, Old, Luky, Gradual, Elka1, Elka2]
+               BestPlayerPinki, RepeaterPlayer, Pavlov, BetterBetterPlayer, WorseWorsePlayer, Patrik, Old, Luky, Gradual, Elka1, Elka2, GPT2, MyPlayer]
 
     payoff_matrix_1 = [[(4, 4), (1, 6)], [(6, 1), (2, 2)]]
     payoff_matrix_2 = [[(4, 4), (3, 10)], [(10, 3), (2, 2)]]
@@ -707,8 +975,41 @@ def main():
     payoff_matrix_list = [payoff_matrix_1, payoff_matrix_2, payoff_matrix_3, payoff_matrix_4, payoff_matrix_5,
                           payoff_matrix_6, payoff_matrix_7]
 
-    turn = Tournament(players=players, payoff_matrix=random.choice(payoff_matrix_list), rounds=500)
-    turn.tournament()
+    score_dict = {}
+    print("me vs all")
+    for _ in range(100):
+        turn = Tournament(players=players, payoff_matrix=random.choice(payoff_matrix_list), rounds=random.randint(90,1000))
+        turn_score_dict = turn.tournament()
+        for key in turn_score_dict.keys():
+            if key in score_dict:
+                score_dict[key] += turn_score_dict[key]
+            else:
+                score_dict[key] = turn_score_dict[key]
+
+    sorted_dict = dict(
+        sorted(score_dict.items(), key=lambda x: x[1]))
+    for key in sorted_dict.keys():
+        print(key, score_dict[key])
+
+    "========================================================="
+
+    score_dict = {}
+    print("\nme vs me")
+    for _ in range(100):
+        turn = Tournament(players=players, payoff_matrix=random.choice(payoff_matrix_list),
+                          rounds=random.randint(90, 1000))
+        turn_score_dict = turn.tournament_self()
+        for key in turn_score_dict.keys():
+            if key in score_dict:
+                score_dict[key] += turn_score_dict[key]
+            else:
+                score_dict[key] = turn_score_dict[key]
+
+    sorted_dict = dict(
+        sorted(score_dict.items(), key=lambda x: x[1]))
+    for key in sorted_dict.keys():
+        print(key, score_dict[key])
+
     # print(f"\n{turn.table_points}\n")
 
 if __name__ == '__main__':
