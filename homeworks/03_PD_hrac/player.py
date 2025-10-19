@@ -8,58 +8,65 @@ Filename: player.py
 Directory: homeworks/03_PD_hrac/
 """
 
-import random
-import unittest
+# TODO: add better moves for game against self
 
-# TODO: add detection for tournament against my self
-
+""" SPECIFICATIONS:
+  [x] filename is player.py
+  [x] docstring not empty
+  [x] 1 or 2 arguments on creation
+  [x] select_move returns bool
+  [x] record_last_moves accepts two arguments
 """
-    2p - 
 
-"""
 
 class MyPlayer:
-    """ Play best point combination move """
-    def __init__(self, payoff_matrix: list, number_of_iterations: int = 400) -> None:
+    """ Identify self or play best move """
+
+    def __init__(self, payoff_matrix: list, number_of_iterations: int = None) -> None:
         self.payoff_matrix = payoff_matrix
         self.number_of_iterations = number_of_iterations
+        self.history = []  # history of moves played by both players
 
-        self.handshake = [1, 0, 1, 1, 0, 1, 0, 0]
-        self.rounds_played = 0
+        self.__handshake = [1, 0, 1, 1, 0, 1, 0, 0]  # random moves always played at start for handshake teammate
+        self.__rounds_played = 0  # already played rounds
+        self.it_is_me = False  # checked if playing against self
 
-        self.history = []
-
-        self.it_is_me = False
+    def __best_decision(self) -> bool:
+        """ Returns best move based on payoff matrix (tested against 16 default strategies) """
+        if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][1][0] > self.payoff_matrix[1][0][0] + \
+                self.payoff_matrix[1][1][0]:
+            return False
+        else:
+            return True
 
     def select_move(self) -> bool:
-        if self.rounds_played < len(self.handshake):
-            return True if self.handshake[self.rounds_played] == 1 else False
+        """ Select the best move """
+        if self.__rounds_played < len(self.__handshake):  # play handshake
+            return True if self.__handshake[self.__rounds_played] == 1 else False
 
-        elif self.it_is_me and self.rounds_played > len(self.handshake):
+        elif self.it_is_me and self.__rounds_played > len(self.__handshake):  # play against self
             if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][0][1] > self.payoff_matrix[1][1][0] + \
                     self.payoff_matrix[1][1][1]:
                 return False
             else:
                 return True
-        else:
-            if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][1][0] > self.payoff_matrix[1][0][0] + \
-                    self.payoff_matrix[1][1][0]:
-                return False
-            else:
-                return True
+        else:  # play against unknown enemy
+            return self.__best_decision()
 
-    def is_it_me(self):
-        for i, (my_turn, enemy_turn) in enumerate(self.history):
-            if my_turn != enemy_turn != self.handshake[i]:
-                return False
-        return True
+    def __is_it_me(self):
+        """ Check if playing against self """
+        for i, (my_turn, enemy_turn) in enumerate(self.history):  # test last n moves was same as mine and handshake
+            if my_turn != enemy_turn != self.__handshake[i]:
+                return False  # not playing self
+        return True  # playing against self
 
     def record_last_moves(self, my_last_move, opponent_last_move) -> None:
-        self.history.append((my_last_move, opponent_last_move))
-        self.rounds_played += 1
+        """ Record last moves played by both players """
+        self.history.append((my_last_move, opponent_last_move))  # add moves to history
+        self.__rounds_played += 1  # count round
 
-        if self.rounds_played == len(self.handshake):
-            self.it_is_me = self.is_it_me()
+        if self.__rounds_played == len(self.__handshake):
+            self.it_is_me = self.__is_it_me()
 
 
 if __name__ == '__main__':
