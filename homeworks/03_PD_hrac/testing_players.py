@@ -15,6 +15,10 @@ Filename: testing_players.py
 Directory: homeworks/03_PD_hrac/
 """
 
+from player import MyPlayer
+from player_sofie import Sofie1, Sofie2, Sofie3, Sofie4, Sofie5, Sofie6
+from player_sofie2 import Sofie7, Sofie8, Sofie9, Sofie10
+
 import random
 
 class RandomPlayer:
@@ -204,7 +208,7 @@ class AntiPinkiPlayer:
         self.history = []
 
     def select_move(self):
-        if self.matrix[0][0][0]+self.matrix[0][1][0]>self.matrix[1][0][0]+self.matrix[1][1][0]:
+        if self.matrix[0][0][0]+self.matrix[0][1][0] > self.matrix[1][0][0]+self.matrix[1][1][0]:
             return False
         else:
             return True
@@ -921,14 +925,19 @@ class Tournament:
             #print(f"\t{key}:\t{self.enemy_points[key]}")
             pass"""
 
+        sorted_get = dict(
+            sorted(self.points.items(), key=lambda x: x[1])[::-1])
+        sorted_given = dict(sorted(self.enemy_points.items(), key=lambda x: x[1]))
+
         #print("Points ballance:")
         ballance_dict = {}
         for key in self.points.keys():
             ballance_dict[key] = self.points[key] - self.enemy_points[key]
-        sorted_dict = dict(
+        sorted_ballance = dict(
             sorted(ballance_dict.items(), key=lambda x: x[1])[::-1])
-        for key in sorted_dict.keys():
-            # print(f"\t{str(key).ljust(20)} - \t{self.points[key]}:{self.enemy_points[key]}:{ballance_dict[key]}")
+
+        for key in sorted_get.keys():
+            #print(f"\t{str(key).ljust(20)} - \t{self.points[key]}:{self.enemy_points[key]}:{ballance_dict[key]}")
             pass
 
 
@@ -953,16 +962,16 @@ class Tournament:
         plt.show()"""
 
         score_dict = {}
-        for index, key in enumerate(sorted_dict.keys()):
+        for index, key in enumerate(sorted_ballance.keys()):
             score_dict[key] = index
 
         return score_dict
 
 
 def main():
-    from player import MyPlayer
     players = [RandomPlayer, FalsePlayer, TruePlayer, SwapTrue, SwapFalse, GPTPlayer, PinkiPlayer, AntiPinkiPlayer,
-               BestPlayerPinki, RepeaterPlayer, Pavlov, BetterBetterPlayer, WorseWorsePlayer, Patrik, Old, Luky, Gradual, Elka1, Elka2, GPT2, MyPlayer]
+               BestPlayerPinki, RepeaterPlayer, Pavlov, BetterBetterPlayer, WorseWorsePlayer, Patrik, Old, Luky, Gradual, Elka1, Elka2, GPT2, MyPlayer,
+               Sofie1, Sofie2, Sofie3, Sofie4, Sofie5, Sofie6 ,Sofie8, Sofie9, Sofie10]
 
     payoff_matrix_1 = [[(4, 4), (1, 6)], [(6, 1), (2, 2)]]
     payoff_matrix_2 = [[(4, 4), (3, 10)], [(10, 3), (2, 2)]]
@@ -1012,8 +1021,39 @@ def main():
 
     # print(f"\n{turn.table_points}\n")
 
+def test_players():
+    #payoff_matrix = [[(4, 4), (1, 6)], [(6, 1), (2, 2)]]
+    payoff_matrix = [[(1, 1), (2, 3)], [(3, 2), (5, 5)]]
+
+    player_1 = MyPlayer(payoff_matrix)
+    player_2 = MyPlayer(payoff_matrix)
+    #player_2 = TruePlayer(payoff_matrix)
+
+    p1 = 0
+    p2 = 0
+
+    print(
+        f"{player_1.__class__.__name__} \t {player_2.__class__.__name__}")
+
+    for _ in range(100):
+        move1 = player_1.select_move()
+        move2 = player_2.select_move()
+
+        gain1 = payoff_matrix[int(move1 == True)][int(move2 == True)][0]
+        gain2 = payoff_matrix[int(move1 == True)][int(move2 == True)][1]
+
+        p1 += gain1
+        p2 += gain2
+
+        print(f"{1 if move1 else 0}:{gain1} \t {1 if move2 else 0}:{gain2}")
+
+        player_1.record_last_moves(move1, move2)
+        player_2.record_last_moves(move2, move1)
+    print(f"{p1} \t {p2}")
+
 if __name__ == '__main__':
     main()
+    #test_players()
     exit()
     payoff_matrix = [[(4, 4), (1, 6)], [(6, 1), (2, 2)]]
     player = Gradual(payoff_matrix)
