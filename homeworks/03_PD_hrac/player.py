@@ -46,7 +46,7 @@ class MyPlayer:
     def select_move(self) -> bool:
         """ Select the best move """
         if self.__rounds_played < len(self.__handshake):  # play handshake
-            return True if self.__handshake[self.__rounds_played] == 1 else False
+            return DEFECT if self.__handshake[self.__rounds_played] == 1 else COOPERATE
 
         elif self.it_is_me and self.__rounds_played > len(self.__handshake):  # play against self
             if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][0][1] > self.payoff_matrix[1][1][0] + \
