@@ -32,7 +32,7 @@ class MyPlayer:
         self.it_is_me = False  # checked if playing against self
 
     def __best_decision(self) -> bool:
-        """ Returns best move based on payoff matrix (tested against 16 default strategies) """
+        """ Returns best move based on payoff matrix (tested against 16 basic strategies) """
         if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][1][0] > self.payoff_matrix[1][0][0] + \
                 self.payoff_matrix[1][1][0]:
             return False
