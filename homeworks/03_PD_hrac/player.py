@@ -39,9 +39,9 @@ class MyPlayer:
         """ Returns best move based on payoff matrix (tested against 16 basic strategies) """
         if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][1][0] > self.payoff_matrix[1][0][0] + \
                 self.payoff_matrix[1][1][0]:
-            return False
+            return COOPERATE
         else:
-            return True
+            return DEFECT
 
     def select_move(self) -> bool:
         """ Select the best move """
@@ -51,9 +51,9 @@ class MyPlayer:
         elif self.it_is_me and self.__rounds_played > len(self.__handshake):  # play against self
             if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][0][1] > self.payoff_matrix[1][1][0] + \
                     self.payoff_matrix[1][1][1]:
-                return False
+                return COOPERATE
             else:
-                return True
+                return DEFECT
         else:  # play against unknown enemy
             return self.__best_decision_move
 
