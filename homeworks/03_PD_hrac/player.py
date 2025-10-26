@@ -51,7 +51,7 @@ class MyPlayer:
             else:
                 return True
         else:  # play against unknown enemy
-            return self.__best_decision()
+            return self.__best_decision_move
 
     def __is_it_me(self):
         """ Check if playing against self """
