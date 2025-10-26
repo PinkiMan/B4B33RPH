@@ -31,6 +31,8 @@ class MyPlayer:
         self.__rounds_played = 0  # already played rounds
         self.it_is_me = False  # checked if playing against self
 
+        self.__best_decision_move = self.select_move()  # best move against unknown players
+
     def __best_decision(self) -> bool:
         """ Returns best move based on payoff matrix (tested against 16 basic strategies) """
         if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][1][0] > self.payoff_matrix[1][0][0] + \
