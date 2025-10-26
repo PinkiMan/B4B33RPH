@@ -18,6 +18,8 @@ Directory: homeworks/03_PD_hrac/
   [x] record_last_moves accepts two arguments
 """
 
+DEFECT = True   # 1
+COOPERATE = False   # 0
 
 class MyPlayer:
     """ Identify self or play best move """
