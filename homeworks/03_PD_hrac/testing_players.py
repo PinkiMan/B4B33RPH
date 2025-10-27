@@ -18,6 +18,7 @@ Directory: homeworks/03_PD_hrac/
 from player import MyPlayer
 from player_sofie import Sofie1, Sofie2, Sofie3, Sofie4, Sofie5, Sofie6
 from player_sofie2 import Sofie7, Sofie8, Sofie9, Sofie10
+from player_03 import Sofie11
 
 import random
 
@@ -856,8 +857,7 @@ class Tournament:
                 self.solo_points[name_1] += score2
 
 
-        sorted_dict = dict(sorted(self.solo_points.items(), key=lambda x: x[1])[
-                               :(len(self.solo_points.items()) - 1) - self.print_players:-1])
+        sorted_dict = dict(sorted(self.solo_points.items(), key=lambda x: x[1])[::-1])
 
 
         #print("Points ballance:")
@@ -866,7 +866,7 @@ class Tournament:
             ballance_dict[key] = self.solo_points[key] - self.solo_points[key]
 
         for key in sorted_dict.keys():
-            #print(f"\t{str(key).ljust(20)} - \t{self.solo_points[key]}")
+            print(f"\t{str(key).ljust(20)} - \t{self.solo_points[key]}")
             pass
 
         score_dict = {}
@@ -937,7 +937,7 @@ class Tournament:
             sorted(ballance_dict.items(), key=lambda x: x[1])[::-1])
 
         for key in sorted_get.keys():
-            #print(f"\t{str(key).ljust(20)} - \t{self.points[key]}:{self.enemy_points[key]}:{ballance_dict[key]}")
+            print(f"\t{str(key).ljust(20)} - \t{self.points[key]}:{self.enemy_points[key]}:{ballance_dict[key]}")
             pass
 
 
@@ -971,7 +971,7 @@ class Tournament:
 def main():
     players = [RandomPlayer, FalsePlayer, TruePlayer, SwapTrue, SwapFalse, GPTPlayer, PinkiPlayer, AntiPinkiPlayer,
                BestPlayerPinki, RepeaterPlayer, Pavlov, BetterBetterPlayer, WorseWorsePlayer, Patrik, Old, Luky, Gradual, Elka1, Elka2, GPT2, MyPlayer,
-               Sofie1, Sofie2, Sofie3, Sofie4, Sofie5, Sofie6 ,Sofie8, Sofie9, Sofie10]
+               Sofie1, Sofie2, Sofie3, Sofie4, Sofie5, Sofie6 ,Sofie8, Sofie9, Sofie10, Sofie11]
 
     payoff_matrix_1 = [[(4, 4), (1, 6)], [(6, 1), (2, 2)]]
     payoff_matrix_2 = [[(4, 4), (3, 10)], [(10, 3), (2, 2)]]
@@ -986,8 +986,11 @@ def main():
 
     score_dict = {}
     print("me vs all")
-    for _ in range(100):
-        turn = Tournament(players=players, payoff_matrix=random.choice(payoff_matrix_list), rounds=random.randint(90,1000))
+    for _ in range(1):
+        matrix = random.choice(payoff_matrix_list)
+        rounds = random.randint(90,1000)
+        print(matrix, rounds)
+        turn = Tournament(players=players, payoff_matrix=matrix, rounds=rounds)
         turn_score_dict = turn.tournament()
         for key in turn_score_dict.keys():
             if key in score_dict:
@@ -1004,9 +1007,11 @@ def main():
 
     score_dict = {}
     print("\nme vs me")
-    for _ in range(100):
-        turn = Tournament(players=players, payoff_matrix=random.choice(payoff_matrix_list),
-                          rounds=random.randint(90, 1000))
+    for _ in range(1):
+        matrix = random.choice(payoff_matrix_list)
+        rounds = random.randint(90, 1000)
+        print(matrix, rounds)
+        turn = Tournament(players=players, payoff_matrix=matrix, rounds=rounds)
         turn_score_dict = turn.tournament_self()
         for key in turn_score_dict.keys():
             if key in score_dict:
@@ -1023,7 +1028,8 @@ def main():
 
 def test_players():
     #payoff_matrix = [[(4, 4), (1, 6)], [(6, 1), (2, 2)]]
-    payoff_matrix = [[(1, 1), (2, 3)], [(3, 2), (5, 5)]]
+    payoff_matrix = [[(5, 5), (1, 70)], [(70, 1), (2, 2)]]
+    #payoff_matrix = [[(1, 1), (2, 3)], [(3, 2), (5, 5)]]
 
     player_1 = MyPlayer(payoff_matrix)
     player_2 = MyPlayer(payoff_matrix)

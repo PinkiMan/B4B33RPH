@@ -2,6 +2,8 @@ __author__ = "Pinkas Matěj"
 __email__ = "pinkas.matej@gmail.com"
 __date__ = "30/09/2025"
 
+import random
+
 """
 Project: B4B33RPH
 Filename: player.py
@@ -18,6 +20,16 @@ Directory: homeworks/03_PD_hrac/
   [x] record_last_moves accepts two arguments
 """
 
+""" STRATEGY:
+ 1. against unknown player:
+    a. play coop if moves with my coop has more points than if with defect
+        [[(4, 4), (1, 6)], [(6, 1), (2, 2)]] => 4+1 < 6+2 => defect
+ 2. against self:
+    a. play coop if 2*coop is most points
+    b. play defect if 2*defect is most points
+    c. play combination of coop and defect simultaneously
+"""
+
 DEFECT = True   # 1
 COOPERATE = False   # 0
 
@@ -31,7 +43,13 @@ class MyPlayer:
 
         self.__handshake = [1, 0, 1, 1, 0, 1, 0, 0]  # random moves always played at start for handshake teammate
         self.__rounds_played = 0  # already played rounds
-        self.it_is_me = False  # checked if playing against self
+        self.__it_is_me = False  # checked if playing against self
+
+        self.__both_coop = False
+        self.__both_defect = False
+        self.__different_play = False
+
+        self.__my_different_play = None
 
         self.__best_decision_move = self.select_move()  # best move against unknown players
 
@@ -49,11 +67,18 @@ class MyPlayer:
             return DEFECT if self.__handshake[self.__rounds_played] == 1 else COOPERATE
 
         elif self.__it_is_me and self.__rounds_played > len(self.__handshake):  # play against self
-            if self.payoff_matrix[0][0][0] + self.payoff_matrix[0][0][1] > self.payoff_matrix[1][1][0] + \
-                    self.payoff_matrix[1][1][1]:
+            if self.__both_coop:
                 return COOPERATE
-            else:
+            elif self.__both_defect:
                 return DEFECT
+            elif self.__different_play:
+                if self.__my_different_play is None:
+                    return random.choice([COOPERATE, DEFECT])
+                else:
+                    return DEFECT if self.__my_different_play == 1 else COOPERATE
+            else:
+                return COOPERATE
+
         else:  # play against unknown enemy
             return self.__best_decision_move
 
@@ -70,7 +95,25 @@ class MyPlayer:
         self.__rounds_played += 1  # count round
 
         if self.__rounds_played == len(self.__handshake):
-            self.it_is_me = self.__is_it_me()
+            self.__it_is_me = self.__is_it_me()
+
+            if self.__it_is_me:
+                both_coop = self.payoff_matrix[COOPERATE][COOPERATE][0] + self.payoff_matrix[COOPERATE][COOPERATE][1]
+                both_defect = self.payoff_matrix[DEFECT][DEFECT][0] + self.payoff_matrix[DEFECT][DEFECT][1]
+                different_play = self.payoff_matrix[COOPERATE][DEFECT][0] + self.payoff_matrix[COOPERATE][DEFECT][1]
+
+                if both_coop > different_play and both_coop > both_defect:  # both coop
+                    self.__both_coop = True
+                elif both_defect > different_play and both_defect > both_coop:  # both defect
+                    self.__both_defect = True
+                elif different_play > both_defect and different_play > both_coop:   # one coop second defect
+                    self.__different_play = True
+                else:   # fallback to both coop
+                    self.__both_coop = True
+
+        elif self.__rounds_played > len(self.__handshake) and self.__different_play and self.__my_different_play is None: # save move for self play diff
+            if my_last_move != opponent_last_move:
+                self.__my_different_play = my_last_move
 
 
 if __name__ == '__main__':
